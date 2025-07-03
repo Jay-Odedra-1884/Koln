@@ -1,6 +1,6 @@
-import { RoomManager } from "./RoomManager";
+import { RoomManager } from "./RoomManager.js";
 
-export class Usermanager {
+export class UserManager {
     constructor() {
         this.users = [];
         this.queue = [];
@@ -14,32 +14,47 @@ export class Usermanager {
         });
 
         this.queue.push(socket.id);
+        console.log("queue: ",this.queue);
+        socket.send('lobby');
         this.clerQueue();
         this.initHandler(socket);
     }
 
     removeUser(socketId) {
-        this.users.filter(x => x.socket.id === socketId);
-        this.queue.filter(x => x === socketId);
+        this.users = this.users.filter(x => x.socket.id !== socketId);
+        this.queue = this.queue.filter(x => x !== socketId);
     }
 
     clerQueue() {
-        let user1 = this.users.find(x => x.socket.id === this.queue.pop());
-        let user2 = this.users.find(x => x.socket.id === this.queue.pop());
-
-        if(!user1 || user2) {
+        if(this.queue.length < 2) {
             return;
         }
 
-        const room = roomManager.createRoom(user1, user2);
+        let id1 = this.queue.pop();
+        let id2 = this.queue.pop();
+
+        let user1 = this.users.find(x => x.socket.id === id1);
+        let user2 = this.users.find(x => x.socket.id === id2);        
+
+        if(!user1 || !user2) {
+            console.log("inside if");
+            
+            return;
+        }
+
+        const room = this.roomManager.createRoom(user1, user2);
+        this.clerQueue();
+    
     }
 
     initHandler(socket) {
-        socket.on('offer', (sdp, roomId) => {
+        socket.on('offer', ({ roomId, sdp }) => {
+        console.log("inside Offer");
             this.roomManager.onOffer(roomId, sdp);
         });
 
-        socket.on('answer', (sdp, roomId) => {
+        socket.on('answer', ({ roomId, sdp }) => {
+        console.log("inside asnawer");
             this.roomManager.onAnswer(roomId, sdp);
         })
     }
