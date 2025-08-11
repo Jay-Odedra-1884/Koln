@@ -17,10 +17,16 @@ const io = new Server(server, {
 const userManager = new UserManager();
 
 io.on('connection', (socket) => {
-    console.log("User connected");
-    userManager.addUser("randomUser", socket)
+    // console.log("User connected");
+    // userManager.addUser("randomUser", socket)
+
+    socket.on('join', ({ name }) => {
+        console.log(`${name} is joiend :)`);
+        userManager.addUser(name, socket);
+    })
 
     socket.on('disconnect', () => {
+        console.log("User diconnect XXXX");
         userManager.removeUser(socket.id)
     })
     

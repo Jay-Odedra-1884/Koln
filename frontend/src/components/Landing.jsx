@@ -29,7 +29,8 @@
         return;
       }
 
-      videoRef.current.srcObject = stream;
+      videoRef.current.srcObject = new MediaStream([videoTrack]);
+      videoRef.current.play();
     }
 
     useEffect(() => {
@@ -45,7 +46,7 @@
         <h1>Landing Page</h1>
         <video ref={videoRef} autoPlay></video>
         <input type="text" onChange={(e) => setName(e.target.value)} />
-        <button onClick={() => {setJoined(true)}}>Join</button>
+        <button onClick={() => {setJoined(true); console.log("Join button clicked")}}>Join</button>
       </div>
     )
     } else {
