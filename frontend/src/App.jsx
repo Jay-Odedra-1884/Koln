@@ -2,13 +2,15 @@ import './App.css'
 import { BrowserRouter, Routes, Route } from "react-router";
 import Landing from './components/Landing';
 import Room from './components/Room';
+import CoverPage from './pages/coverPage';
 
 function App() {
 
   return (
     <BrowserRouter>
       <Routes>
-        <Route path='/' element={<Landing />} />
+        <Route path='/' element={<CoverPage />} />
+        <Route path='/join' element={<Landing />} />
       </Routes>
     </BrowserRouter>
   )

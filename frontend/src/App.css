@@ -1,0 +1,36 @@
+.app {
+    color: white;
+}
+
+body {
+    padding-inline: 2rem;
+    background-image: url('/landing-bg.svg');
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-attachment: fixed;
+}
+
+/* utils */
+
+.inp-theme {
+    outline: none;
+    border: 1px solid gray;
+    padding:0.4rem 0.5rem;
+}
+
+.inp-theme:focus {
+    box-shadow: 0 0 1000px 40px #BF1CBA;
+    border: none;
+
+}
+
+.btn-theme {
+    background-color: #BF1CBA;
+    padding: 0.4rem 0.7rem;
+    border-radius: 0.5rem;
+    transition: all 0.3s;
+}
+
+.btn-theme:hover {
+    scale: 1.1;
+}

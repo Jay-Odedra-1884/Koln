@@ -4,7 +4,6 @@ import { io } from "socket.io-client";
 
 const URL = "http://localhost:8000";
 
-// ICE server config: For production, add TURN server for better connectivity
 const config = {
   iceServers: [
     { urls: "stun:stun.l.google.com:19302" },
@@ -27,6 +26,7 @@ function Room({
   const [remoteAudioTrack, setRemoteAudioTrack] = useState(null);
   const [remoteMediaStream, setRemoteMediaStream] = useState(null);
   const remoteVideoRef = useRef();
+  const remoteAudioRef = useRef();
   const localVideoRef = useRef();
 
   useEffect(() => {
@@ -55,10 +55,10 @@ function Room({
       pc.onicecandidate = async (e) => {
         console.log("receiving ice candidate locally");
         if (e.candidate) {
-          socket.emit("add-ice-candidate", { 
-            candidate: e.candidate, 
-            type: "sender", 
-            roomId 
+          socket.emit("add-ice-candidate", {
+            candidate: e.candidate,
+            type: "sender",
+            roomId
           })
         }
       }
@@ -85,7 +85,7 @@ function Room({
       //set remote offer
       console.log("Setting remote description (offer):", remoteSdp);
       await pc.setRemoteDescription(remoteSdp);
-      
+
       const sdp = await pc.createAnswer();
       await pc.setLocalDescription(sdp);
 
@@ -96,7 +96,7 @@ function Room({
 
       setRemoteMediaStream(stream);
       setReceivingPc(pc);
-      
+
       window.pcr = pc;
 
       pc.ontrack = (e) => {
@@ -112,10 +112,10 @@ function Room({
         console.log("on ice candidate on receiving side");
 
         if (e.candidate) {
-          socket.emit("add-ice-candidate", { 
-            candidate: e.candidate, 
-            type: "receiver", 
-            roomId 
+          socket.emit("add-ice-candidate", {
+            candidate: e.candidate,
+            type: "receiver",
+            roomId
           })
         }
       }
@@ -131,9 +131,9 @@ function Room({
         if (transceivers.length >= 2) {
           const track1 = transceivers[0].receiver.track;
           const track2 = transceivers[1].receiver.track;
-          
+
           console.log("Processing tracks:", track1, track2);
-          
+
           if (track1.kind === "video") {
             setRemoteAudioTrack(track2);
             setRemoteVideoTrack(track1);
@@ -141,12 +141,18 @@ function Room({
             setRemoteAudioTrack(track1);
             setRemoteVideoTrack(track2);
           }
-          
+
           if (remoteVideoRef.current && remoteVideoRef.current.srcObject) {
             remoteVideoRef.current.srcObject.addTrack(track1);
             remoteVideoRef.current.srcObject.addTrack(track2);
-            remoteVideoRef.current.play().catch(e => console.log("Play error:", e));
+            remoteVideoRef.current.play().catch(e => console.log("Play error in Video:", e));
           }
+
+          // if(remoteAudioRef && remoteAudioRef.current.srcObject) {
+          //   remoteAudioRef.current.srcObject.addTrack(track1)
+          //   remoteAudioRef.current.srcObject.addTrack(track2)
+          //   remoteAudioRef.current.play().catch(e => console.log("Play error in Audio:", e));
+          // }
         }
       }, 5000)
     })
@@ -171,7 +177,7 @@ function Room({
     socket.on("add-ice-candidate", ({ candidate, type }) => {
       console.log("add ice candidate from remote");
       console.log({ candidate, type })
-      
+
       if (type === "sender") {
         setReceivingPc(pc => {
           if (!pc) {
@@ -205,18 +211,43 @@ function Room({
 
   useEffect(() => {
     if (localVideoRef.current && localVideoTrack) {
-      localVideoRef.current.srcObject = new MediaStream([localVideoTrack]);
+
+      const tracks = [localVideoTrack];
+      if(localAudioTrack) {
+        tracks.push(localAudioTrack);
+      }
+
+      localVideoRef.current.srcObject = new MediaStream(tracks);
       localVideoRef.current.play().catch(e => console.log("Local video play error:", e));
     }
-  }, [localVideoTrack])
+  }, [localVideoTrack, localAudioTrack])
+
+
+
+
+  const handleDisconnect = () => {
+
+  }
 
   return (
-    <div>
-      <h1>Room</h1>
-      Hi {name}
-      <video ref={localVideoRef} width={400} height={400} autoPlay playsInline></video>
-      {lobby && <p>Waiting to connect you to someone</p>}
-      <video ref={remoteVideoRef} width={400} height={400} autoPlay playsInline></video>
+    <div className='w-full min-h-screen'>
+      <h1 className='text-4xl text-center'><span className='text-[#BF1CBA]'>K</span>oln</h1>
+      <div className='grid grid-cols-3 md:grid-cols-4'>
+        <div className='relative w-full col-span-3'>
+          <div className='relative'>
+            {lobby && <p className='absolute top-1/2 left-1/2 transform -translate-x-1/2'>Waiting to connect you to someone</p>}
+            <video className='bg-white/20 h-[45rem] w-full rounded-2xl object-cover' ref={remoteVideoRef} width={500} height={500} autoPlay playsInline></video>
+            {/* <audio ref={remoteAudioRef} autoPlay></audio> */}
+            <div className='absolute top-4 right-4 rounded-2xl overflow-hidden'>
+              <video ref={localVideoRef} width={150} height={150} autoPlay playsInline></video>
+            </div>
+          </div>
+        </div>
+        <div className='bg-yellow-400 w-full h-[45rem] col-span-1'>
+          chat
+        </div>
+      </div>
+      {/* {!lobby && <div className='bg-red-500 py-2 rounded-lg flex justify-center w-26 cursor-pointer'>disconnect</div>} */}
     </div>
   )
 }
