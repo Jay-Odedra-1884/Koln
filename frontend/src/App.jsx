@@ -1,8 +1,7 @@
 import './App.css'
 import { BrowserRouter, Routes, Route } from "react-router";
 import Landing from './components/Landing';
-import Room from './components/Room';
-import CoverPage from './pages/coverPage';
+import CoverPage from './pages/CoverPage';
 
 function App() {
 
