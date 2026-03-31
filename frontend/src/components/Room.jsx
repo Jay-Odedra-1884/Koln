@@ -2,7 +2,9 @@ import React, { useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { io } from "socket.io-client";
 
-const URL = "http://localhost:8000";
+// const URL = "http://localhost:8000";
+// const URL = "https://koln.onrender.com";
+const URL = import.meta.env.VITE_BACKEND_URL;
 
 const config = {
   iceServers: [
@@ -232,7 +234,7 @@ function Room({
   return (
     <div className='w-full min-h-screen'>
       <h1 className='text-4xl text-center'><span className='text-[#BF1CBA]'>K</span>oln</h1>
-      <div className='grid grid-cols-3 md:grid-cols-4'>
+      <div className='grid grid-cols-3 md:grid-cols-4 gap-3'>
         <div className='relative w-full col-span-3'>
           <div className='relative'>
             {lobby && <p className='absolute top-1/2 left-1/2 transform -translate-x-1/2'>Waiting to connect you to someone</p>}
@@ -243,8 +245,17 @@ function Room({
             </div>
           </div>
         </div>
-        <div className='bg-yellow-400 w-full h-[45rem] col-span-1'>
-          chat
+        <div className='bg-white/20 w-full h-[45rem] col-span-1 rounded-2xl'>
+          <div className='h-[calc(100vh-120px)]'>
+            Mesages
+          </div>
+          <form className='mx-2'>
+            <div className='flex '>
+            <input type="text" name="message" id="message" placeholder='Type your message' className='w-full bg-white/50 p-3 rounded-l-lg' />
+            <hr className='border-l-2 border-gray-500' />
+            <button type="submit" className='bg-white/50 p-3 rounded-r-lg'>Send</button>
+            </div>
+          </form>
         </div>
       </div>
       {/* {!lobby && <div className='bg-red-500 py-2 rounded-lg flex justify-center w-26 cursor-pointer'>disconnect</div>} */}

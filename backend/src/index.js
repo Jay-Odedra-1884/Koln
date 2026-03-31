@@ -16,6 +16,8 @@ const io = new Server(server, {
 
 const userManager = new UserManager();
 
+//when user/browser open this will run first
+
 io.on('connection', (socket) => {
     // console.log("User connected");
     // userManager.addUser("randomUser", socket)
