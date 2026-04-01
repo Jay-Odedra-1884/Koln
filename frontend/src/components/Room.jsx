@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { io } from "socket.io-client";
 
 // const URL = "http://localhost:8000";
@@ -19,6 +19,7 @@ function Room({
   localAudioTrack
 }) {
 
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [socket, setSocket] = useState(null);
   const [lobby, setLobby] = useState(true);
@@ -30,6 +31,10 @@ function Room({
   const remoteVideoRef = useRef();
   const remoteAudioRef = useRef();
   const localVideoRef = useRef();
+
+  //to show the ui
+  const [isMuted, setIsMuted] = useState(false);
+  const [isVideoOff, setIsVideoOff] = useState(false);
 
   useEffect(() => {
     const socket = io(URL);
@@ -215,7 +220,7 @@ function Room({
     if (localVideoRef.current && localVideoTrack) {
 
       const tracks = [localVideoTrack];
-      if(localAudioTrack) {
+      if (localAudioTrack) {
         tracks.push(localAudioTrack);
       }
 
@@ -226,9 +231,44 @@ function Room({
 
 
 
-
+  //handle disconnect
+  //TODO: disconnect redirection error
   const handleDisconnect = () => {
+    if (localVideoTrack) {
+      localVideoTrack.stop();
+    }
 
+    if (localAudioTrack) {
+      localAudioTrack.stop();
+    }
+
+    if (sendingPc) {
+      sendingPc.close();
+    }
+
+    if (receivingPc) {
+      receivingPc.close();
+    }
+
+    socket.disconnect();
+
+    navigate("/");
+  }
+
+  //to toggle mic
+  const toggleMic = () => {
+    if (localAudioTrack) {
+      localAudioTrack.enabled = !localAudioTrack.enabled;
+      setIsMuted(!localAudioTrack.enabled);
+    }
+  }
+
+  //to toggle video
+  const toggleVideo = () => {
+    if (localVideoTrack) {
+      localVideoTrack.enabled = !localVideoTrack.enabled;
+      setIsVideoOff(!localVideoTrack.enabled);
+    }
   }
 
   return (
@@ -239,21 +279,58 @@ function Room({
           <div className='relative'>
             {lobby && <p className='absolute top-1/2 left-1/2 transform -translate-x-1/2'>Waiting to connect you to someone</p>}
             <video className='bg-white/20 h-[45rem] w-full rounded-2xl object-cover' ref={remoteVideoRef} width={500} height={500} autoPlay playsInline></video>
-            {/* <audio ref={remoteAudioRef} autoPlay></audio> */}
-            <div className='absolute top-4 right-4 rounded-2xl overflow-hidden'>
-              <video ref={localVideoRef} width={150} height={150} autoPlay playsInline></video>
+            <audio ref={remoteAudioRef} autoPlay></audio>
+            <div className='absolute top-4 right-4 rounded-2xl overflow-hidden border-2 border-white/20 shadow-lg'>
+              <video ref={localVideoRef} width={150} height={150} autoPlay muted playsInline></video>
             </div>
+
+            {/* Floating Control Bar */}
+            {!lobby && (
+              <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex items-center gap-6 bg-black/40 backdrop-blur-xl p-4 rounded-full border border-white/10 shadow-2xl z-50">
+                <button
+                  onClick={toggleMic}
+                  title={isMuted ? "Unmute" : "Mute"}
+                  className={`p-4 rounded-full transition-all duration-300 ${isMuted ? 'bg-red-500/80 hover:bg-red-600' : 'bg-white/10 hover:bg-white/20'}`}
+                >
+                  {isMuted ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="1" y1="1" x2="23" y2="23"></line><path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"></path><path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+                  )}
+                </button>
+
+                <button
+                  onClick={toggleVideo}
+                  title={isVideoOff ? "Turn Camera On" : "Turn Camera Off"}
+                  className={`p-4 rounded-full transition-all duration-300 ${isVideoOff ? 'bg-red-500/80 hover:bg-red-600' : 'bg-white/10 hover:bg-white/20'}`}
+                >
+                  {isVideoOff ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 16v1a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2m5.66 0H14a2 2 0 0 1 2 2v3.34l1 1L23 7v10l-1-1"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
+                  )}
+                </button>
+
+                <button
+                  onClick={handleDisconnect}
+                  title="End Call"
+                  className="p-4 bg-red-600 hover:bg-red-700 rounded-full transition-all duration-300 shadow-lg shadow-red-500/20"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="rotate-[135deg]"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l2.27-2.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                </button>
+              </div>
+            )}
           </div>
         </div>
-        <div className='bg-white/20 w-full h-[45rem] col-span-1 rounded-2xl'>
-          <div className='h-[calc(100vh-120px)]'>
-            Mesages
+        <div className='bg-white/20 w-full h-[45rem] col-span-1 flex flex-col rounded-2xl'>
+          <div className='h-full'>
+            Messages
           </div>
-          <form className='mx-2'>
+          <form className='mx-2 my-2'>
             <div className='flex '>
-            <input type="text" name="message" id="message" placeholder='Type your message' className='w-full bg-white/50 p-3 rounded-l-lg' />
-            <hr className='border-l-2 border-gray-500' />
-            <button type="submit" className='bg-white/50 p-3 rounded-r-lg'>Send</button>
+              <input type="text" name="message" id="message" placeholder='Type your message' className='w-full bg-white/50 p-3 rounded-l-lg' />
+              <hr className='border-l-2 border-gray-500' />
+              <button type="submit" className='bg-white/50 p-3 rounded-r-lg'>Send</button>
             </div>
           </form>
         </div>
