@@ -32,6 +32,11 @@ function Room({
   const remoteAudioRef = useRef();
   const localVideoRef = useRef();
 
+  const [msg, setMsg] = useState([
+    // Example initial message
+    { sender: "system", content: "Welcome to the room!" }
+  ]);
+
   //to show the ui
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoOff, setIsVideoOff] = useState(false);
@@ -271,6 +276,27 @@ function Room({
     }
   }
 
+
+  const handleMsgSend = (e) => {
+    e.preventDefault();
+    const messageInput = e.target.elements.message;
+    const message = messageInput.value.trim();
+
+    if(message) {
+      socket.emit('chat-message', message);
+      console.log("Message sent:", message);
+    }
+
+    if (message) {
+      setMsg(prevMsg => [...prevMsg, { sender: "me", content: message }]);
+      messageInput.value = '';
+    }
+  }
+
+  socket.on('chat-message', (message) => {
+    setMsg(prevMsg => [...prevMsg, { sender: "other", content: message }]);
+  });
+
   return (
     <div className='w-full min-h-screen'>
       <h1 className='text-4xl text-center'><span className='text-[#BF1CBA]'>K</span>oln</h1>
@@ -323,14 +349,23 @@ function Room({
           </div>
         </div>
         <div className='bg-white/20 w-full h-[45rem] col-span-1 flex flex-col rounded-2xl'>
-          <div className='h-full'>
-            Messages
+          <div className='h-full p-5 flex flex-col'>
+            {msg.map((m, index) => (
+              <div key={index} className={`p-2 my-1 w-fit rounded-lg ${m.sender === "me" ? "bg-blue-500 text-white self-end" : "bg-gray-200 text-black self-start"}`}>
+                <span>{m.content}</span>
+              </div>
+            ))}
           </div>
-          <form className='mx-2 my-2'>
+          <form className='mx-2 my-2' onSubmit={handleMsgSend}>
             <div className='flex '>
               <input type="text" name="message" id="message" placeholder='Type your message' className='w-full bg-white/50 p-3 rounded-l-lg' />
               <hr className='border-l-2 border-gray-500' />
-              <button type="submit" className='bg-white/50 p-3 rounded-r-lg'>Send</button>
+              <button 
+                type="submit" 
+                className='bg-white/50 p-3 rounded-r-lg'
+              >
+                Send
+              </button>
             </div>
           </form>
         </div>
